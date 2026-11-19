@@ -1,0 +1,74 @@
+# Builds the iOS app on a GitHub-hosted Mac and uploads it to TestFlight.
+# Run from Actions > TestFlight > Run workflow. Needs these repository secrets
+# (Settings > Secrets and variables > Actions):
+#   APPLE_TEAM_ID            10-character Team ID (Apple Developer > Membership)
+#   ASC_KEY_ID               App Store Connect API key ID
+#   ASC_ISSUER_ID            App Store Connect API issuer ID
+#   ASC_KEY_P8               full contents of the AuthKey_XXXX.p8 file (role: Admin, so Xcode can create signing certificates)
+name: TestFlight
+on:
+  workflow_dispatch:
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Check secrets are set
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+          P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          for v in TEAM KID ISS P8; do [ -n "${!v}" ] || { echo "Missing secret: $v"; exit 1; }; done
+          grep -q "IOS_GOOGLE_APP_ID" lib/firebase_options.dart && { echo "Fill the iOS values in lib/firebase_options.dart first"; exit 1; } || true
+      - name: Write App Store Connect key
+        env:
+          P8: ${{ secrets.ASC_KEY_P8 }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "$P8" > "$RUNNER_TEMP/keys/AuthKey_$KID.p8"
+      - run: flutter pub get
+      - name: Prepare Xcode project
+        run: flutter build ios --release --config-only --build-number=$((GITHUB_RUN_NUMBER + 100))
+      - name: Archive (automatic signing via the API key)
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KID.p8" -authenticationKeyID "$KID" -authenticationKeyIssuerID "$ISS" \
+            DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic \
+            archive | xcbeautify || exit ${PIPESTATUS[0]}
+      - name: Export and upload to TestFlight
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KID.p8" -authenticationKeyID "$KID" -authenticationKeyIssuerID "$ISS"
+          echo "Uploaded build $((GITHUB_RUN_NUMBER + 100)). It appears in App Store Connect > TestFlight after Apple's processing (usually 10-30 minutes)."

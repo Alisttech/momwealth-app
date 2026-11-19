@@ -1,0 +1,26 @@
+# Run once (Actions > Generate platforms > Run workflow) to create the ios/ and android/ folders,
+# apply MOM Wealth's settings, generate icons and splash screen, and commit them to the repo.
+name: Generate platforms
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: ./tool/configure_platforms.sh
+      - name: Commit generated platform folders
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A ios android pubspec.lock lib test || true
+          git commit -m "Generate iOS and Android platform folders" || echo "Nothing to commit"
+          git push
