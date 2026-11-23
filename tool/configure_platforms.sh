@@ -102,6 +102,17 @@ if "CustomTabsService" not in s:
 if "android.permission.INTERNET" not in s:
     s = s.replace("<application", '<uses-permission android:name="android.permission.INTERNET" />\n    <application', 1)
 p.write_text(s)
+# Android lint crashes inside the firebase_core plugin on current Gradle/Kotlin (a tooling bug, not
+# our code). Release builds run "lintVital" checks by default, so skip them for all modules.
+for g in ["android/build.gradle.kts", "android/build.gradle"]:
+    p = pathlib.Path(g)
+    if p.exists() and "lintVital" not in p.read_text():
+        p.write_text(p.read_text().rstrip() + """
+
+subprojects {
+    tasks.matching { it.name.startsWith("lintVital") }.configureEach { enabled = false }
+}
+""")
 print("platform settings applied")
 PY
 
