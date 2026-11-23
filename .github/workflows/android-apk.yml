@@ -1,0 +1,33 @@
+# Builds an installable Android APK for testing. Creates the platform folders on the fly if they
+# aren't committed yet. Download the APK from the run's "Artifacts" section.
+name: Android test APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - name: Create and configure platform folders
+        run: ./tool/configure_platforms.sh
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+      - name: Build APK (release, test-signed)
+        run: flutter build apk --release --build-number=${{ github.run_number }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: momwealth-test-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
