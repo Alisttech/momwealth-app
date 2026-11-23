@@ -17,7 +17,8 @@ String _refId(dynamic v) => v is DocumentReference ? v.id : _str(v);
 class Profile {
   final String uid, name, email, phone, kycStatus, kycLastError;
   final String first, middle, last, dob, gender, maritalStatus, address, city, state;
-  final String employmentStatus, occupation, employer, bvnLast4, ninLast4, photoUrl;
+  final String employmentStatus, occupation, employer, bvnLast4, ninLast4, photoUrl, memberNo;
+  final bool bvnVerified;
   final int walletBalance, withdrawalHold, loanOutstanding;
   final DateTime? createdAt, phoneChangedAt;
   final Map<String, dynamic>? virtualAccount;
@@ -42,6 +43,8 @@ class Profile {
         bvnLast4 = _str(d['bvnLast4']),
         ninLast4 = _str(d['ninLast4']),
         photoUrl = _str(d['photo_url']),
+        memberNo = _str(d['memberNo']),
+        bvnVerified = d['bvnVerified'] == true,
         walletBalance = _int(d['walletBalance']),
         withdrawalHold = _int(d['withdrawalHold']),
         loanOutstanding = _int(d['loanOutstanding']),

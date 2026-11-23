@@ -57,16 +57,16 @@ class MomCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text('MOM WEALTH', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: 1.6, fontSize: 13)),
                 const Spacer(),
-                Text(p.accountBank, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                if (p.hasAccount) Text(p.accountBank, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
               ]),
               const Spacer(),
               if (!compact) ...[const _Chip(), const SizedBox(height: 14)],
-              Text('ACCOUNT NUMBER', style: TextStyle(color: Colors.white.withValues(alpha: .7), fontSize: 10.5, letterSpacing: 1.2, fontWeight: FontWeight.w600)),
+              Text(p.hasAccount ? 'ACCOUNT NUMBER' : 'MEMBER ID', style: TextStyle(color: Colors.white.withValues(alpha: .7), fontSize: 10.5, letterSpacing: 1.2, fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  p.hasAccount ? groupAccountNumber(p.accountNumber) : '•••• ••• •••',
+                  p.hasAccount ? groupAccountNumber(p.accountNumber) : (p.memberNo.isEmpty ? '—' : p.memberNo),
                   style: TextStyle(color: Colors.white, fontSize: compact ? 22 : 27, fontWeight: FontWeight.w700, letterSpacing: 2.2, fontFeatures: const [FontFeature.tabularFigures()]),
                 ),
               ),
@@ -76,7 +76,7 @@ class MomCard extends StatelessWidget {
                   child: Text(p.accountName.toUpperCase(),
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, letterSpacing: .8, fontSize: 13)),
                 ),
-                Text('SAVINGS', style: TextStyle(color: Colors.white.withValues(alpha: .75), fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w600)),
+                Text(p.hasAccount ? 'SAVINGS' : 'MEMBER', style: TextStyle(color: Colors.white.withValues(alpha: .75), fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w600)),
               ]),
             ]),
           ),
@@ -125,13 +125,30 @@ class AccountCardScreen extends StatelessWidget {
     final p = context.watch<Session>().profile!;
     final details = 'Account number: ${p.accountNumber}\nBank: ${p.accountBank}\nAccount name: ${p.accountName}';
     return Scaffold(
-      appBar: AppBar(title: const Text('My account')),
+      appBar: AppBar(title: Text(p.hasAccount ? 'My account' : 'My member card')),
       body: PageBody(children: [
         MomCard(profile: p),
         const SizedBox(height: 18),
-        if (!p.hasAccount)
-          const Note('Your account number appears here once your identity has been verified.')
-        else ...[
+        if (!p.hasAccount) ...[
+          AppCard(
+            child: Column(children: [
+              KV('Member ID', p.memberNo.isEmpty ? '—' : p.memberNo),
+              KV('Name', p.name),
+              KV('Phone', p.phone.isEmpty ? '—' : p.phone, last: true),
+            ]),
+          ),
+          const SizedBox(height: 18),
+          const SectionTitle('How to save'),
+          const AppCard(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _Step(1, 'Tap Save money on the Home screen and choose a plan.'),
+              _Step(2, 'Pay by card, bank transfer or USSD on the secure Squad page.'),
+              _Step(3, 'Your savings update as soon as the payment is confirmed. You get an email for every payment.'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          const Note('Quote your member ID whenever you contact MOM.', tone: Tone.info),
+        ] else ...[
           Row(children: [
             Expanded(
               child: FilledButton.icon(

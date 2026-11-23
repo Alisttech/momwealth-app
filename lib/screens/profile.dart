@@ -48,7 +48,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
           ]),
         ),
-        if (p.hasAccount) ...[
+        if (p.verified) ...[
           const SizedBox(height: 14),
           GestureDetector(onTap: () => push(context, const AccountCardScreen()), child: MomCard(profile: p, compact: true)),
           Align(
@@ -56,7 +56,7 @@ class _ProfileTabState extends State<ProfileTab> {
             child: TextButton.icon(
               onPressed: () => push(context, const AccountCardScreen()),
               icon: const Icon(Icons.credit_card_rounded, size: 18),
-              label: const Text('View account details'),
+              label: Text(p.hasAccount ? 'View account details' : 'View member card'),
             ),
           ),
         ],
@@ -80,10 +80,11 @@ class _ProfileTabState extends State<ProfileTab> {
         SectionTitle('Personal details', trailing: const Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.lock_outline, size: 14, color: AppColors.inkSoft),
           SizedBox(width: 4),
-          Text('From your BVN', style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
+          Text('Locked', style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
         ])),
         AppCard(
           child: Column(children: [
+            if (p.memberNo.isNotEmpty) KV('Member ID', p.memberNo),
             KV('Full name', p.name.isEmpty ? dash : p.name),
             KV('Date of birth', p.dob.isEmpty ? dash : p.dob),
             KV('Gender', p.gender.isEmpty ? dash : p.gender),

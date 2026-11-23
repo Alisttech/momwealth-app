@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../code_sheet.dart';
 import '../format.dart';
 import '../services/api.dart';
 import '../services/session.dart';
@@ -148,38 +149,45 @@ class _KycFlowState extends State<KycFlow> {
     setState(() => _error = err);
     if (err != null) return;
     FocusScope.of(context).unfocus();
+    final phone = _phone.text.replaceAll(RegExp(r'\D'), '');
+    final details = {
+      'firstName': _first.text.trim(),
+      'middleName': _middle.text.trim(),
+      'lastName': _last.text.trim(),
+      'dob': isoDay(_dob!),
+      'gender': _gender,
+      'maritalStatus': _marital,
+      'phone': phone,
+      'address': _address.text.trim(),
+      'city': _city.text.trim(),
+      'state': _state,
+      'employmentStatus': _employment,
+      'occupation': _occupation.text.trim(),
+      'employer': _employer.text.trim(),
+      'bvn': _bvn.text,
+      'nin': _nin.text,
+    };
     widget.onSubmitting?.call();
+    // Confirm the phone with an SMS code; the code is checked together with the details.
+    final ok = await confirmWithSmsCode(
+      context,
+      title: 'Confirm your phone',
+      purpose: 'confirm your phone number',
+      verifyLabel: 'Finish',
+      send: () => Api.call('requestKycPhoneCode', {'phone': phone}),
+      verify: (codeId, code) => Api.call('verifyBvnAndCreateAccount', {...details, 'codeId': codeId, 'code': code}),
+    );
+    if (!ok) return;
     try {
-      await Api.call('verifyBvnAndCreateAccount', {
-        'firstName': _first.text.trim(),
-        'middleName': _middle.text.trim(),
-        'lastName': _last.text.trim(),
-        'dob': isoDay(_dob!),
-        'gender': _gender,
-        'maritalStatus': _marital,
-        'phone': _phone.text.replaceAll(RegExp(r'\D'), ''),
-        'address': _address.text.trim(),
-        'city': _city.text.trim(),
-        'state': _state,
-        'employmentStatus': _employment,
-        'occupation': _occupation.text.trim(),
-        'employer': _employer.text.trim(),
-        'bvn': _bvn.text,
-        'nin': _nin.text,
-      });
-      try {
-        (await SharedPreferences.getInstance()).remove(_draftKey);
-      } catch (_) {}
-      setState(() => _done = true);
-    } catch (e) {
-      setState(() => _error = friendlyError(e));
-    }
+      (await SharedPreferences.getInstance()).remove(_draftKey);
+    } catch (_) {}
+    if (mounted) setState(() => _done = true);
   }
 
   @override
   Widget build(BuildContext context) {
     final s = context.watch<Session>();
-    if (_done && s.profile != null && s.profile!.hasAccount) return _Success(onContinue: () => widget.onFinished?.call());
+    if (_done && s.profile != null && s.profile!.verified) return _Success(onContinue: () => widget.onFinished?.call());
     const titles = ['About you', 'Where you live', 'Your work', 'Verify your identity'];
     return Scaffold(
       appBar: AppBar(
@@ -219,7 +227,7 @@ class _KycFlowState extends State<KycFlow> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               ErrorText(_error),
               const SizedBox(height: 8),
-              _step < 3 ? FilledButton(onPressed: _next, child: const Text('Continue')) : BusyButton(label: 'Verify and create my account', onPressed: _submit),
+              _step < 3 ? FilledButton(onPressed: _next, child: const Text('Continue')) : BusyButton(label: 'Continue', onPressed: _submit),
             ]),
           ),
         ]),
@@ -325,7 +333,7 @@ class _KycFlowState extends State<KycFlow> {
   }
 
   Widget _identity() => _page([
-        _hint('Your BVN lets us confirm your identity and create your own MOM Wealth account number. We never see your bank balance and can\'t move money from your bank.'),
+        _hint('MOM needs your BVN and NIN to confirm who you are, as cooperatives and banks must. We never see your bank balance and can\'t move money from your bank. Next, we\'ll text a code to your phone.'),
         TextField(
           controller: _bvn,
           keyboardType: TextInputType.number,
@@ -347,7 +355,7 @@ class _KycFlowState extends State<KycFlow> {
             onChanged: (v) => setState(() => _consent = v ?? false),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
-            title: const Text('I confirm these details are mine and correct, and I allow MOM Wealth to verify them with my bank.', style: TextStyle(fontSize: 13.5, height: 1.4)),
+            title: const Text('I confirm these details are mine and correct, and I allow MOM Wealth to verify them.', style: TextStyle(fontSize: 13.5, height: 1.4)),
           ),
         ),
         const SizedBox(height: 12),
@@ -372,20 +380,26 @@ class _Success extends StatelessWidget {
           const SizedBox(height: 16),
           Text('You\'re verified, ${p.firstName}!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          const Text('This is your own MOM Wealth account number. Transfer to it from any bank to add to your savings.',
-              textAlign: TextAlign.center, style: TextStyle(color: AppColors.inkSoft, height: 1.45)),
+          Text(
+              p.hasAccount
+                  ? 'This is your own MOM Wealth account number. Transfer to it from any bank to add to your savings.'
+                  : 'Your MOM Wealth account is ready. Tap Save money any time to save by card, bank transfer or USSD.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.inkSoft, height: 1.45)),
           const SizedBox(height: 24),
           MomCard(profile: p),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: p.accountNumber));
-              toast(context, 'Account number copied');
-            },
-            icon: const Icon(Icons.copy_rounded, size: 18),
-            label: const Text('Copy account number'),
-          ),
-          const SizedBox(height: 10),
+          if (p.hasAccount) ...[
+            OutlinedButton.icon(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: p.accountNumber));
+                toast(context, 'Account number copied');
+              },
+              icon: const Icon(Icons.copy_rounded, size: 18),
+              label: const Text('Copy account number'),
+            ),
+            const SizedBox(height: 10),
+          ],
           FilledButton(onPressed: onContinue, child: const Text('Go to my account')),
         ]),
       ),
