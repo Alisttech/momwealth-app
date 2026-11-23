@@ -6,6 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -31,3 +34,11 @@ jobs:
           name: momwealth-test-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+      - name: Publish to the "Test build" release (easy phone download)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk MOMWealth-test.apk
+          gh release view test-build >/dev/null 2>&1 || gh release create test-build --prerelease --title "Test build (Android)" --notes "Latest test APK. Install on Android: download, open, allow install from this source."
+          gh release upload test-build MOMWealth-test.apk --clobber
+          gh release edit test-build --notes "Latest test APK, build ${{ github.run_number }} from ${GITHUB_SHA::7}. Download MOMWealth-test.apk on the phone, open it and allow installing from this source."
