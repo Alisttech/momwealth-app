@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'screens/auth.dart';
-import 'screens/kyc.dart';
 import 'screens/onboarding.dart';
 import 'screens/payment.dart';
 import 'screens/shell.dart';
@@ -113,7 +112,6 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late bool _onboarded = widget.onboarded;
-  bool _holdKyc = false; // keep the identity flow up after success to show the new account number
 
   @override
   Widget build(BuildContext context) {
@@ -130,12 +128,6 @@ class _AuthGateState extends State<AuthGate> {
       return const AuthScreen();
     }
     if (!s.ready) return const LoadingScreen();
-    if (s.profile?.verified != true || _holdKyc) {
-      return KycFlow(
-        onSubmitting: () => _holdKyc = true,
-        onFinished: () => setState(() => _holdKyc = false),
-      );
-    }
     return const AppShell();
   }
 }
@@ -164,7 +156,7 @@ class _SupportLayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<Session>();
     final mq = MediaQuery.of(context);
-    final eligible = s.user != null && s.ready && s.profile?.verified == true;
+    final eligible = s.user != null && s.ready;
     return Stack(children: [
       child,
       if (eligible && mq.viewInsets.bottom == 0)

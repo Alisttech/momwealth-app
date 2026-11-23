@@ -34,3 +34,6 @@ android/key.properties
 
 # Never commit Apple keys
 *.p8
+
+# Test-only signing key for CI test builds (see tool/test-signing/README.md)
+!tool/test-signing/momwealth-test.jks

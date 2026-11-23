@@ -73,7 +73,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       context,
       title: 'Confirm withdrawal request',
       message: '${naira(k!)} from ${src!.name}\nto ${b.accountName}, ${b.bank} ${b.accountNumber}.\n\n'
-          'We\'ll text a code to your phone to confirm it\'s you. The amount is then held until MOM reviews and pays it.',
+          'We\'ll send you a code to confirm it\'s you. The amount is then held until MOM reviews and pays it.',
       confirmLabel: 'Continue',
     );
     if (!ok || !mounted) return;
@@ -105,7 +105,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     final list = _sources(s);
     final src = list.where((x) => x.key == _sourceKey).firstOrNull;
     const how = 'How it works: MOM reviews your request, pays the money into your bank account, then marks it paid. '
-        'Your balance only reduces once it has been paid. You\'ll get an email at each step, and a text when it has been paid.';
+        'Your balance only reduces once it has been paid. You\'ll get an email at each step.';
     return Scaffold(
       appBar: AppBar(title: const Text('Withdraw')),
       body: PageBody(children: [

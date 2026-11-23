@@ -122,7 +122,7 @@ class _CodeSheetState extends State<_CodeSheet> {
             height: 52,
             alignment: Alignment.center,
             decoration: const BoxDecoration(color: AppColors.greenWash, shape: BoxShape.circle),
-            child: const Icon(Icons.sms_outlined, color: AppColors.green),
+            child: const Icon(Icons.lock_outline_rounded, color: AppColors.green),
           ),
           const SizedBox(height: 14),
           Text(widget.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),

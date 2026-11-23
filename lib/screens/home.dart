@@ -10,6 +10,7 @@ import '../widgets.dart';
 import 'account.dart';
 import 'groups.dart';
 import 'history.dart';
+import 'kyc.dart' show promptVerification, openVerification;
 import 'loans.dart';
 import 'notifications.dart';
 import 'vendors.dart';
@@ -18,7 +19,16 @@ import 'savings.dart';
 import 'shell.dart';
 import 'withdraw.dart';
 
-void push(BuildContext context, Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+/// Opens a page. Pages that move money or join groups need a verified member; others are open to all.
+void push(BuildContext context, Widget page) {
+  final needsVerification = page is PayScreen || page is NewPlanScreen || page is WithdrawScreen || page is LoanApplyScreen ||
+      page is NewGroupScreen || page is NewAjoScreen || page is JoinScreen;
+  if (needsVerification && context.read<Session>().profile?.verified != true) {
+    promptVerification(context);
+    return;
+  }
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+}
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -74,6 +84,23 @@ class HomeTab extends StatelessWidget {
             HeroButton(label: 'Withdraw', icon: Icons.north_rounded, filled: false, onTap: () => push(context, const WithdrawScreen())),
           ],
         ),
+        if (!p.verified) ...[
+          const SizedBox(height: 12),
+          AppCard(
+            onTap: () => openVerification(context),
+            color: AppColors.goldWash,
+            borderColor: Colors.transparent,
+            child: const Row(children: [
+              Icon(Icons.verified_user_outlined, color: AppColors.gold),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text('Verify your identity to start saving, join groups and Ajo, withdraw or apply for a loan.',
+                    style: TextStyle(fontSize: 13.5, height: 1.4)),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.gold),
+            ]),
+          ),
+        ],
         if (p.hasAccount) ...[
           const SizedBox(height: 12),
           AppCard(

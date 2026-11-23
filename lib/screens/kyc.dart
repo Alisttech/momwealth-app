@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../code_sheet.dart';
 import '../format.dart';
 import '../services/api.dart';
 import '../services/session.dart';
@@ -24,10 +23,24 @@ const nigerianStates = [
 
 /// Identity onboarding: four short steps, then Squad checks the BVN and creates the member's account number.
 /// Shown after sign-up and to any member who isn't verified yet.
+/// Explains why verification is needed and opens the identity steps.
+Future<void> promptVerification(BuildContext context, {String? reason}) async {
+  final go = await showAppSheet<bool>(context, title: 'Verify your identity first', builder: (ctx) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(reason ?? 'To save, join a group or Ajo, withdraw or borrow, MOM needs to confirm who you are. It takes about 3 minutes.',
+          style: const TextStyle(color: AppColors.inkSoft, height: 1.45)),
+      const SizedBox(height: 16),
+      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Verify now')),
+      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
+    ]);
+  });
+  if (go == true && context.mounted) openVerification(context);
+}
+
+void openVerification(BuildContext context) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const KycFlow()));
+
 class KycFlow extends StatefulWidget {
-  const KycFlow({super.key, this.onSubmitting, this.onFinished});
-  /// Called when the member submits, so the app keeps this screen up to show the new account number.
-  final VoidCallback? onSubmitting;
+  const KycFlow({super.key, this.onFinished});
   final VoidCallback? onFinished;
   @override
   State<KycFlow> createState() => _KycFlowState();
@@ -167,17 +180,12 @@ class _KycFlowState extends State<KycFlow> {
       'bvn': _bvn.text,
       'nin': _nin.text,
     };
-    widget.onSubmitting?.call();
-    // Confirm the phone with an SMS code; the code is checked together with the details.
-    final ok = await confirmWithSmsCode(
-      context,
-      title: 'Confirm your phone',
-      purpose: 'confirm your phone number',
-      verifyLabel: 'Finish',
-      send: () => Api.call('requestKycPhoneCode', {'phone': phone}),
-      verify: (codeId, code) => Api.call('verifyBvnAndCreateAccount', {...details, 'codeId': codeId, 'code': code}),
-    );
-    if (!ok) return;
+    try {
+      await Api.call('verifyBvnAndCreateAccount', details);
+    } catch (e) {
+      setState(() => _error = friendlyError(e));
+      return;
+    }
     try {
       (await SharedPreferences.getInstance()).remove(_draftKey);
     } catch (_) {}
@@ -187,13 +195,13 @@ class _KycFlowState extends State<KycFlow> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<Session>();
-    if (_done && s.profile != null && s.profile!.verified) return _Success(onContinue: () => widget.onFinished?.call());
+    if (_done && s.profile != null && s.profile!.verified) return _Success(onContinue: () => widget.onFinished != null ? widget.onFinished!() : Navigator.of(context).pop());
     const titles = ['About you', 'Where you live', 'Your work', 'Verify your identity'];
     return Scaffold(
       appBar: AppBar(
         leading: _step > 0 ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: _back) : null,
         title: Text('Step ${_step + 1} of 4'),
-        actions: [TextButton(onPressed: () => FirebaseAuth.instance.signOut(), child: const Text('Sign out'))],
+        actions: [if (!Navigator.of(context).canPop()) TextButton(onPressed: () => FirebaseAuth.instance.signOut(), child: const Text('Sign out'))],
       ),
       body: SafeArea(
         child: Column(children: [
@@ -227,7 +235,7 @@ class _KycFlowState extends State<KycFlow> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               ErrorText(_error),
               const SizedBox(height: 8),
-              _step < 3 ? FilledButton(onPressed: _next, child: const Text('Continue')) : BusyButton(label: 'Continue', onPressed: _submit),
+              _step < 3 ? FilledButton(onPressed: _next, child: const Text('Continue')) : BusyButton(label: 'Submit', onPressed: _submit),
             ]),
           ),
         ]),
@@ -293,7 +301,7 @@ class _KycFlowState extends State<KycFlow> {
       ]);
 
   Widget _whereYouLive() => _page([
-        _hint('Use the phone number linked to your BVN. We\'ll also use it to text you codes that confirm withdrawals.'),
+        _hint('Use the phone number linked to your BVN.'),
         TextField(
           controller: _phone,
           keyboardType: TextInputType.phone,
@@ -333,7 +341,7 @@ class _KycFlowState extends State<KycFlow> {
   }
 
   Widget _identity() => _page([
-        _hint('MOM needs your BVN and NIN to confirm who you are, as cooperatives and banks must. We never see your bank balance and can\'t move money from your bank. Next, we\'ll text a code to your phone.'),
+        _hint('MOM needs your BVN and NIN to confirm who you are, as cooperatives and banks must. We never see your bank balance and can\'t move money from your bank.'),
         TextField(
           controller: _bvn,
           keyboardType: TextInputType.number,

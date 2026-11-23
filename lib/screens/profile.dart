@@ -15,7 +15,7 @@ import 'auth.dart' show privacyPolicyUrl;
 import 'history.dart';
 import 'notifications.dart';
 import 'support.dart';
-import 'kyc.dart' show nigerianStates, maritalOptions, employmentOptions;
+import 'kyc.dart' show nigerianStates, maritalOptions, employmentOptions, openVerification;
 import 'home.dart' show push;
 import 'withdraw.dart';
 
@@ -43,7 +43,10 @@ class _ProfileTabState extends State<ProfileTab> {
                 Text(p.name.isEmpty ? 'Member' : p.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                 Text(s.user?.email ?? p.email, style: const TextStyle(color: AppColors.inkSoft, fontSize: 13)),
                 const SizedBox(height: 6),
-                if (p.verified) const Badge2('Verified', Tone.success) else const Badge2('Not verified', Tone.pending),
+                if (p.verified)
+                  const Badge2('Verified', Tone.success)
+                else
+                  GestureDetector(onTap: () => openVerification(context), child: const Badge2('Not verified · Verify now', Tone.pending)),
               ]),
             ),
           ]),
@@ -69,7 +72,7 @@ class _ProfileTabState extends State<ProfileTab> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                p.phone.isEmpty ? 'Add your phone number. We text codes to it to confirm withdrawals.' : 'Is ${p.phone} still your number? We text codes to it to confirm withdrawals.',
+                p.phone.isEmpty ? 'Add your phone number so MOM can reach you.' : 'Is ${p.phone} still your number? Keep it up to date so MOM can reach you.',
                 style: const TextStyle(fontSize: 13.5, height: 1.4),
               ),
             ),
@@ -279,7 +282,7 @@ class _EditDetailsScreenState extends State<EditDetailsScreen> {
   }
 }
 
-/// New phone number, confirmed with a code texted to that number.
+/// New phone number, confirmed with a one-time code (by email, or SMS when enabled).
 class ChangePhoneScreen extends StatefulWidget {
   const ChangePhoneScreen({super.key});
   @override
@@ -305,7 +308,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
           decoration: const InputDecoration(labelText: 'New phone number', hintText: '08031234567'),
         ),
         const SizedBox(height: 14),
-        const Note('We\'ll text a code to the new number to confirm it\'s yours. For your security, withdrawals pause for 24 hours after a change, '
+        const Note('We\'ll send you a code to confirm it\'s you. For your security, withdrawals pause for 24 hours after a change, '
             'and we let your old number and email know.', tone: Tone.info),
         const SizedBox(height: 18),
         ErrorText(_error),

@@ -113,6 +113,31 @@ subprojects {
     tasks.matching { it.name.startsWith("lintVital") }.configureEach { enabled = false }
 }
 """)
+# Release signing from android/key.properties when present (CI writes it); otherwise the debug key.
+p = pathlib.Path("android/app/build.gradle.kts")
+if p.exists():
+    s = p.read_text()
+    if "keystoreProperties" not in s:
+        s = "import java.io.FileInputStream\nimport java.util.Properties\n\n" + s
+        s = s.replace("android {", """val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
+android {""", 1)
+        s = s.replace("    buildTypes {", """    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+    buildTypes {""", 1)
+        s = s.replace('signingConfig = signingConfigs.getByName("debug")',
+                      'signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")')
+        p.write_text(s)
 print("platform settings applied")
 PY
 
