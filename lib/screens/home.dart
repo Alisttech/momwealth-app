@@ -11,6 +11,8 @@ import 'account.dart';
 import 'groups.dart';
 import 'history.dart';
 import 'loans.dart';
+import 'notifications.dart';
+import 'vendors.dart';
 import 'payment.dart';
 import 'savings.dart';
 import 'shell.dart';
@@ -26,8 +28,6 @@ class HomeTab extends StatelessWidget {
     final s = context.watch<Session>();
     final p = s.profile!;
     final target = s.plans.where((x) => x.isTarget && x.percent < 100).firstOrNull ?? s.plans.where((x) => x.isTarget).firstOrNull;
-    final contributions = s.plans.fold<int>(0, (a, x) => a + x.totalContributionsKobo);
-    final count = s.plans.fold<int>(0, (a, x) => a + x.contributionsCount);
     final loan = s.currentLoan;
     final w = s.openWithdrawal;
     final recent = activityItems(s).take(5).toList();
@@ -35,9 +35,22 @@ class HomeTab extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          IconButton(
+            tooltip: 'Notifications',
+            onPressed: () => push(context, const NotificationsScreen()),
+            icon: Badge(
+              isLabelVisible: s.unreadCount > 0,
+              label: Text(s.unreadCount > 9 ? '9+' : '${s.unreadCount}'),
+              backgroundColor: AppColors.red,
+              child: const Icon(Icons.notifications_none_rounded, size: 26),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
         titleSpacing: 16,
         title: Row(children: [
-          Initials(p.name.isEmpty ? '?' : p.name, size: 36),
+          MemberAvatar(profile: p, email: s.user?.email ?? '', size: 36),
           const SizedBox(width: 10),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Welcome back', style: TextStyle(fontSize: 12, color: AppColors.inkSoft, fontWeight: FontWeight.w500)),
@@ -106,11 +119,27 @@ class HomeTab extends StatelessWidget {
           _Quick(icon: Icons.receipt_long_outlined, label: 'History', onTap: () => push(context, const HistoryScreen())),
         ]),
         const SizedBox(height: 18),
-        Row(children: [
-          Expanded(child: _Stat('Active plans', '${s.plans.length}')),
-          const SizedBox(width: 10),
-          Expanded(child: _Stat('Total contributions', naira(contributions, decimals: false), sub: '$count payment${count == 1 ? '' : 's'}')),
-        ]),
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
+              child: _Promo(
+                icon: Icons.local_offer_outlined,
+                title: 'Vendor discounts',
+                text: s.offers.isEmpty ? 'Member deals from our partners' : '${s.offers.length} member deal${s.offers.length == 1 ? '' : 's'} available',
+                onTap: () => push(context, const VendorOffersScreen()),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _Promo(
+                icon: Icons.groups_2_outlined,
+                title: 'Save together',
+                text: s.groups.isEmpty && s.ajos.isEmpty ? 'Start a group goal or an Ajo circle' : 'Your groups and Ajo circles',
+                onTap: () => AppShell.of(context)?.go(2),
+              ),
+            ),
+          ]),
+        ),
         const SizedBox(height: 10),
         if (target != null)
           AppCard(
@@ -184,18 +213,39 @@ class _Quick extends StatelessWidget {
       );
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat(this.label, this.value, {this.sub});
-  final String label, value;
-  final String? sub;
+/// Solid green tile on Home (vendor discounts, group savings).
+class _Promo extends StatelessWidget {
+  const _Promo({required this.icon, required this.title, required this.text, required this.onTap});
+  final IconData icon;
+  final String title, text;
+  final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => AppCard(
-        padding: const EdgeInsets.all(14),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
-          if (sub != null) Text(sub!, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12)),
-        ]),
+  Widget build(BuildContext context) => Material(
+        color: AppColors.green,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: .16), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: Colors.white, size: 19),
+                ),
+                const Spacer(),
+                const Icon(Icons.arrow_forward_rounded, color: Colors.white70, size: 18),
+              ]),
+              const SizedBox(height: 12),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+              const SizedBox(height: 3),
+              Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.35)),
+            ]),
+          ),
+        ),
       );
 }

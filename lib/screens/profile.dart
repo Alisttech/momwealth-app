@@ -13,6 +13,8 @@ import '../widgets.dart';
 import 'account.dart';
 import 'auth.dart' show privacyPolicyUrl;
 import 'history.dart';
+import 'notifications.dart';
+import 'support.dart';
 import 'kyc.dart' show nigerianStates, maritalOptions, employmentOptions;
 import 'home.dart' show push;
 import 'withdraw.dart';
@@ -34,7 +36,7 @@ class _ProfileTabState extends State<ProfileTab> {
       body: PageBody(children: [
         AppCard(
           child: Row(children: [
-            Initials(p.name.isEmpty ? '?' : p.name, size: 54),
+            MemberAvatar(profile: p, email: s.user?.email ?? '', size: 54),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -112,6 +114,10 @@ class _ProfileTabState extends State<ProfileTab> {
             _Item(Icons.receipt_long_outlined, 'Transaction history', () => push(context, const HistoryScreen())),
             const Divider(height: 1),
             _Item(Icons.north_rounded, 'Withdrawals', () => push(context, const WithdrawScreen())),
+            const Divider(height: 1),
+            _Item(Icons.support_agent_rounded, 'Open a support ticket', () => openSupport(context)),
+            const Divider(height: 1),
+            _Item(Icons.notifications_none_rounded, 'Notifications', () => push(context, const NotificationsScreen())),
             const Divider(height: 1),
             _Item(Icons.privacy_tip_outlined, 'Privacy policy', () => launchUrl(Uri.parse(privacyPolicyUrl), mode: LaunchMode.inAppBrowserView)),
             const Divider(height: 1),

@@ -31,6 +31,10 @@ class Session extends ChangeNotifier {
   List<SavingsGroup> groups = [];
   List<AjoCircle> ajos = [];
   List<AjoBank> ajoBanks = [];
+  List<AppNotification> notifications = [];
+  List<SupportTicket> tickets = [];
+  List<VendorOffer> offers = [];
+  int get unreadCount => notifications.where((n) => !n.read).length;
 
   bool get ready => user != null && const ['profile', 'plans', 'ledger', 'payments', 'withdrawals', 'loans', 'groups', 'ajos'].every(_loaded.contains);
   String get uid => user?.uid ?? '';
@@ -55,6 +59,9 @@ class Session extends ChangeNotifier {
     groups = [];
     ajos = [];
     ajoBanks = [];
+    notifications = [];
+    tickets = [];
+    offers = [];
     authResolved = true;
     notifyListeners();
     if (u == null) return;
@@ -123,6 +130,33 @@ class Session extends ChangeNotifier {
       ajoBanks = q.docs.map(AjoBank.fromDoc).toList();
       _mark('ajoBanks');
     }, onError: (e) => onErr('ajoBanks', e)));
+    _subs.add(mine('notifications').snapshots().listen((q) {
+      notifications = q.docs.map(AppNotification.fromDoc).toList()..sort((a, b) => newest(a.createdAt, b.createdAt));
+      _mark('notifications');
+    }, onError: (e) => onErr('notifications', e)));
+    _subs.add(mine('tickets').snapshots().listen((q) {
+      tickets = q.docs.map(SupportTicket.fromDoc).toList()..sort((a, b) => newest(a.createdAt, b.createdAt));
+      _mark('tickets');
+    }, onError: (e) => onErr('tickets', e)));
+    _subs.add(_db.collection('vendorOffers').snapshots().listen((q) {
+      offers = q.docs.map(VendorOffer.fromDoc).where((o) => o.active).toList();
+      _mark('offers');
+    }, onError: (e) => onErr('offers', e)));
+  }
+
+  /// Marks every unread notification as read (members may only change `read`).
+  Future<void> markAllRead() async {
+    final unread = notifications.where((n) => !n.read).toList();
+    if (unread.isEmpty) return;
+    try {
+      final batch = _db.batch();
+      for (final n in unread) {
+        batch.update(_db.collection('notifications').doc(n.id), {'read': true});
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('markAllRead: $e');
+    }
   }
 
   // ---- convenience lookups

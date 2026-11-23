@@ -13,10 +13,29 @@ import 'screens/kyc.dart';
 import 'screens/onboarding.dart';
 import 'screens/payment.dart';
 import 'screens/shell.dart';
+import 'screens/support.dart';
 import 'services/session.dart';
 import 'theme.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
+
+/// Remembers the route on top so the floating support button knows where it is.
+class RouteTracker extends NavigatorObserver {
+  final top = ValueNotifier<Route<dynamic>?>(null);
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) => _set(route);
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => _set(previousRoute);
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route == top.value) _set(previousRoute);
+  }
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) => _set(newRoute);
+  void _set(Route<dynamic>? r) => WidgetsBinding.instance.addPostFrameCallback((_) => top.value = r);
+}
+
+final routeTracker = RouteTracker();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -75,7 +94,9 @@ class _MomWealthAppState extends State<MomWealthApp> {
         title: 'MOM Wealth',
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
+        navigatorObservers: [routeTracker],
         theme: buildTheme(),
+        builder: (context, child) => _SupportLayer(child: child ?? const SizedBox()),
         home: AuthGate(onboarded: widget.onboarded),
       ),
     );
@@ -132,4 +153,37 @@ class LoadingScreen extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// Draws the green chat button over every page once the member is signed in and verified.
+/// Hidden on the support page itself, over bottom sheets and dialogs, and while typing.
+class _SupportLayer extends StatelessWidget {
+  const _SupportLayer({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<Session>();
+    final mq = MediaQuery.of(context);
+    final eligible = s.user != null && s.ready && s.profile?.verified == true;
+    return Stack(children: [
+      child,
+      if (eligible && mq.viewInsets.bottom == 0)
+        ValueListenableBuilder<Route<dynamic>?>(
+          valueListenable: routeTracker.top,
+          builder: (context, route, _) {
+            if (route is PopupRoute || route?.settings.name == supportRouteName) return const SizedBox.shrink();
+            final onTabs = route == null || route.isFirst;
+            return Positioned(
+              right: 16,
+              bottom: mq.padding.bottom + (onTabs ? 84 : 20),
+              child: SupportFab(
+                onTap: () => navigatorKey.currentState?.push(
+                  MaterialPageRoute(settings: const RouteSettings(name: supportRouteName), builder: (_) => const SupportScreen()),
+                ),
+              ),
+            );
+          },
+        ),
+    ]);
+  }
 }

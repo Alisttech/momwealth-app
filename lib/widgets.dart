@@ -40,12 +40,18 @@ class HeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(colors: [AppColors.greenDark, AppColors.green, AppColors.greenLight], begin: Alignment.topLeft, end: Alignment.bottomRight),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), color: AppColors.green),
+      child: Stack(children: [
+        // MOM logo silhouette in the background.
+        Positioned(
+          right: -28,
+          top: -22,
+          child: IgnorePointer(child: Image.asset('assets/images/logogram.png', width: 170, color: Colors.white.withValues(alpha: .09), colorBlendMode: BlendMode.srcIn)),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
         const SizedBox(height: 4),
         FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(amount, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5))),
@@ -54,6 +60,8 @@ class HeroCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(children: [for (var i = 0; i < actions.length; i++) ...[if (i > 0) const SizedBox(width: 10), Expanded(child: actions[i])]]),
         ],
+          ]),
+        ),
       ]),
     );
   }
@@ -396,6 +404,35 @@ void toast(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
+/// "Adaeze Grace Okafor" -> "AO"; "ada.okafor@x.com" -> "AO"; "ada@x.com" -> "A".
+String initialsOf(String nameOrEmail) {
+  var t = nameOrEmail.trim();
+  if (t.contains('@')) t = t.split('@').first.replaceAll(RegExp(r'[._\-+0-9]+'), ' ');
+  final parts = t.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  if (parts.isEmpty) return '';
+  final first = parts.first[0];
+  final last = parts.length > 1 ? parts.last[0] : '';
+  return (first + last).toUpperCase();
+}
+
+/// The member's photo if they have one, otherwise their initials (from their name, or email).
+class MemberAvatar extends StatelessWidget {
+  const MemberAvatar({super.key, required this.profile, this.email = '', this.size = 38});
+  final Profile profile;
+  final String email;
+  final double size;
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Initials(profile.name.trim().isNotEmpty ? profile.name : (email.isNotEmpty ? email : profile.email), size: size);
+    if (profile.photoUrl.startsWith('http')) {
+      return ClipOval(
+        child: Image.network(profile.photoUrl, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback),
+      );
+    }
+    return fallback;
+  }
+}
+
 /// Round avatar with initials.
 class Initials extends StatelessWidget {
   const Initials(this.name, {super.key, this.size = 38, this.color = AppColors.greenWash, this.fg = AppColors.green});
@@ -404,8 +441,7 @@ class Initials extends StatelessWidget {
   final Color color, fg;
   @override
   Widget build(BuildContext context) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    final s = parts.take(2).map((p) => p[0].toUpperCase()).join();
+    final s = initialsOf(name);
     return Container(
       width: size,
       height: size,
@@ -418,7 +454,7 @@ class Initials extends StatelessWidget {
 
 /// Page scaffold with the standard padding and pull-to-refresh-free scrolling.
 class PageBody extends StatelessWidget {
-  const PageBody({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 32)});
+  const PageBody({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 96)});
   final List<Widget> children;
   final EdgeInsets padding;
   @override

@@ -17,7 +17,7 @@ String _refId(dynamic v) => v is DocumentReference ? v.id : _str(v);
 class Profile {
   final String uid, name, email, phone, kycStatus, kycLastError;
   final String first, middle, last, dob, gender, maritalStatus, address, city, state;
-  final String employmentStatus, occupation, employer, bvnLast4, ninLast4;
+  final String employmentStatus, occupation, employer, bvnLast4, ninLast4, photoUrl;
   final int walletBalance, withdrawalHold, loanOutstanding;
   final DateTime? createdAt, phoneChangedAt;
   final Map<String, dynamic>? virtualAccount;
@@ -41,6 +41,7 @@ class Profile {
         employer = _str(d['employer']),
         bvnLast4 = _str(d['bvnLast4']),
         ninLast4 = _str(d['ninLast4']),
+        photoUrl = _str(d['photo_url']),
         walletBalance = _int(d['walletBalance']),
         withdrawalHold = _int(d['withdrawalHold']),
         loanOutstanding = _int(d['loanOutstanding']),
@@ -334,4 +335,47 @@ class AjoBank {
   AjoBank.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc)
       : ajoId = _str(doc.data()!['ajoId']),
         bank = BankDetails.fromMap(doc.data()!['bank']);
+}
+
+class AppNotification {
+  final String id, title, body, type;
+  final bool read;
+  final DateTime? createdAt;
+  AppNotification.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc)
+      : id = doc.id,
+        title = _str(doc.data()!['title']),
+        body = _str(doc.data()!['body']),
+        type = _str(doc.data()!['type']),
+        read = doc.data()!['read'] == true,
+        createdAt = _date(doc.data()!['createdAt']);
+}
+
+class SupportTicket {
+  final String id, ticketNo, category, title, description, status, resolution;
+  final DateTime? createdAt, completedAt;
+  SupportTicket.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc)
+      : id = doc.id,
+        ticketNo = _str(doc.data()!['ticketNo']),
+        category = _str(doc.data()!['category']),
+        title = _str(doc.data()!['title']),
+        description = _str(doc.data()!['description']),
+        status = _str(doc.data()!['status']).isEmpty ? 'open' : _str(doc.data()!['status']),
+        resolution = _str(doc.data()!['resolution']),
+        createdAt = _date(doc.data()!['createdAt']),
+        completedAt = _date(doc.data()!['completedAt']);
+  bool get done => status == 'completed' || status == 'closed';
+}
+
+class VendorOffer {
+  final String id, vendor, title, details, code, link, category;
+  final bool active;
+  VendorOffer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc)
+      : id = doc.id,
+        vendor = _str(doc.data()!['vendor']),
+        title = _str(doc.data()!['title']),
+        details = _str(doc.data()!['details']),
+        code = _str(doc.data()!['code']),
+        link = _str(doc.data()!['link']),
+        category = _str(doc.data()!['category']),
+        active = doc.data()!['active'] != false;
 }

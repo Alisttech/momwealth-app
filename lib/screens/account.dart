@@ -38,7 +38,7 @@ class MomCard extends StatelessWidget {
           Positioned(
             right: -40,
             bottom: -46,
-            child: Opacity(opacity: .13, child: Image.asset('assets/images/logogram.png', width: compact ? 170 : 230, color: Colors.white)),
+            child: Image.asset('assets/images/logogram.png', width: compact ? 170 : 230, color: Colors.white.withValues(alpha: .13), colorBlendMode: BlendMode.srcIn),
           ),
           Positioned(
             left: -60,
