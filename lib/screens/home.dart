@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../activity.dart';
@@ -6,6 +7,7 @@ import '../format.dart';
 import '../services/session.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'account.dart';
 import 'groups.dart';
 import 'history.dart';
 import 'loans.dart';
@@ -59,6 +61,37 @@ class HomeTab extends StatelessWidget {
             HeroButton(label: 'Withdraw', icon: Icons.north_rounded, filled: false, onTap: () => push(context, const WithdrawScreen())),
           ],
         ),
+        if (p.hasAccount) ...[
+          const SizedBox(height: 12),
+          AppCard(
+            onTap: () => push(context, const AccountCardScreen()),
+            padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+            child: Row(children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: AppColors.greenWash, borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.account_balance_outlined, color: AppColors.green, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Save by transfer · ${p.accountBank}', style: const TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
+                  Text(groupAccountNumber(p.accountNumber), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                ]),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, size: 20, color: AppColors.green),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: p.accountNumber));
+                  toast(context, 'Account number copied');
+                },
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.inkSoft),
+            ]),
+          ),
+        ],
         if (infoNeeded) ...[
           const SizedBox(height: 12),
           GestureDetector(onTap: () => AppShell.of(context)?.go(3), child: const Note('MOM needs more information about your loan. Tap to reply.')),

@@ -15,21 +15,48 @@ DateTime? _date(dynamic v) {
 String _refId(dynamic v) => v is DocumentReference ? v.id : _str(v);
 
 class Profile {
-  final String uid, name, email, phone;
+  final String uid, name, email, phone, kycStatus, kycLastError;
+  final String first, middle, last, dob, gender, maritalStatus, address, city, state;
+  final String employmentStatus, occupation, employer, bvnLast4, ninLast4;
   final int walletBalance, withdrawalHold, loanOutstanding;
-  final DateTime? createdAt;
+  final DateTime? createdAt, phoneChangedAt;
   final Map<String, dynamic>? virtualAccount;
   Profile.fromMap(this.uid, Map<String, dynamic> d)
       : name = _str(d['display_name']),
         email = _str(d['email']),
         phone = _str(d['phone_number']),
+        kycStatus = _str(d['kycStatus']),
+        kycLastError = _str(d['kycLastError']),
+        first = _str(d['firstName']),
+        middle = _str(d['middleName']),
+        last = _str(d['lastName']),
+        dob = _str(d['DOB']),
+        gender = _str(d['Gender']),
+        maritalStatus = _str(d['maritalStatus']),
+        address = _str(d['Address']),
+        city = _str(d['City']),
+        state = _str(d['State']),
+        employmentStatus = _str(d['employmentStatus']),
+        occupation = _str(d['occupation']),
+        employer = _str(d['employer']),
+        bvnLast4 = _str(d['bvnLast4']),
+        ninLast4 = _str(d['ninLast4']),
         walletBalance = _int(d['walletBalance']),
         withdrawalHold = _int(d['withdrawalHold']),
         loanOutstanding = _int(d['loanOutstanding']),
         createdAt = _date(d['created_time']),
+        phoneChangedAt = _date(d['phoneChangedAt']),
         virtualAccount = d['virtualAccount'] is Map ? Map<String, dynamic>.from(d['virtualAccount']) : null;
   int get available => math.max(0, walletBalance - withdrawalHold);
-  String get firstName => name.trim().isEmpty ? 'there' : name.trim().split(' ').first;
+  bool get verified => kycStatus == 'verified';
+  String get firstName {
+    if (first.trim().isNotEmpty) return first.trim();
+    return name.trim().isEmpty ? 'there' : name.trim().split(' ').first;
+  }
+  String get accountNumber => _str(virtualAccount?['accountNumber']);
+  String get accountBank => _str(virtualAccount?['bankName']).isEmpty ? 'GTBank' : _str(virtualAccount?['bankName']);
+  String get accountName => _str(virtualAccount?['accountName']).isEmpty ? name : _str(virtualAccount?['accountName']);
+  bool get hasAccount => accountNumber.isNotEmpty;
 }
 
 class SavingsPlan {

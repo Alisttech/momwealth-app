@@ -59,7 +59,7 @@ class Session extends ChangeNotifier {
     notifyListeners();
     if (u == null) return;
     try {
-      await Api.memberSetup(displayName: pendingName ?? u.displayName ?? '', phone: pendingPhone ?? '');
+      await Api.memberSetup(displayName: pendingName ?? u.displayName ?? '', phone: pendingPhone ?? '', newSignup: pendingName != null);
     } catch (e) {
       debugPrint('memberSetup failed: $e');
     }

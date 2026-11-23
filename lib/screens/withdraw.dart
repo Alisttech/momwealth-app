@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../activity.dart';
+import '../code_sheet.dart';
 import '../format.dart';
 import '../models.dart';
 import '../services/api.dart';
@@ -71,23 +72,30 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     final ok = await confirmSheet(
       context,
       title: 'Confirm withdrawal request',
-      message: '${naira(k!)} from ${src!.name}\nto ${b.accountName}, ${b.bank} ${b.accountNumber}.\n\nThis amount is held until MOM reviews and pays it.',
-      confirmLabel: 'Submit request',
+      message: '${naira(k!)} from ${src!.name}\nto ${b.accountName}, ${b.bank} ${b.accountNumber}.\n\n'
+          'We\'ll text a code to your phone to confirm it\'s you. The amount is then held until MOM reviews and pays it.',
+      confirmLabel: 'Continue',
     );
-    if (!ok) return;
-    try {
-      await Api.call('requestWithdrawal', {
-        if (src.isGroup) 'groupId': src.id else 'planId': src.id,
+    if (!ok || !mounted) return;
+    final source = {if (src.isGroup) 'groupId': src.id else 'planId': src.id};
+    final done = await confirmWithSmsCode(
+      context,
+      title: 'Enter your code',
+      purpose: 'confirm this withdrawal of ${naira(k)}',
+      verifyLabel: 'Submit request',
+      send: () => Api.call('requestWithdrawalCode', {...source, 'amountKobo': k, 'accountNumber': b.accountNumber}),
+      verify: (codeId, code) => Api.call('requestWithdrawal', {
+        ...source,
         'amountKobo': k,
         'bankName': b.bank,
         'accountNumber': b.accountNumber,
         'accountName': b.accountName,
         'reason': _reason.text.trim(),
-      });
-      if (mounted) toast(context, 'Withdrawal request submitted');
-    } catch (e) {
-      setState(() => _error = friendlyError(e));
-    }
+        'codeId': codeId,
+        'code': code,
+      }),
+    );
+    if (done && mounted) toast(context, 'Withdrawal request submitted');
   }
 
   @override
@@ -97,7 +105,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     final list = _sources(s);
     final src = list.where((x) => x.key == _sourceKey).firstOrNull;
     const how = 'How it works: MOM reviews your request, pays the money into your bank account, then marks it paid. '
-        'Your balance only reduces once it has been paid. You\'ll get an email at each step.';
+        'Your balance only reduces once it has been paid. You\'ll get an email at each step, and a text when it has been paid.';
     return Scaffold(
       appBar: AppBar(title: const Text('Withdraw')),
       body: PageBody(children: [

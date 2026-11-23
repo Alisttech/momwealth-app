@@ -11,8 +11,8 @@ class Api {
     return v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
   }
 
-  static Future<void> memberSetup({required String displayName, required String phone}) =>
-      call('memberSetup', {'displayName': displayName, 'phone': phone});
+  static Future<void> memberSetup({required String displayName, required String phone, bool newSignup = false}) =>
+      call('memberSetup', {'displayName': displayName, 'phone': phone, 'newSignup': newSignup});
 
   /// target: {'planId': id} | {'groupId': id} | {'ajoId': id}. Returns {reference, checkoutUrl}.
   static Future<Map<String, dynamic>> startPayment(Map<String, dynamic> target, int? amountKobo) =>
