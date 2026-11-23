@@ -426,7 +426,7 @@ class MemberAvatar extends StatelessWidget {
     final fallback = Initials(profile.name.trim().isNotEmpty ? profile.name : (email.isNotEmpty ? email : profile.email), size: size);
     if (profile.photoUrl.startsWith('http')) {
       return ClipOval(
-        child: Image.network(profile.photoUrl, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback),
+        child: Image.network(profile.photoUrl, width: size, height: size, fit: BoxFit.cover, errorBuilder: (c, e, st) => fallback),
       );
     }
     return fallback;
