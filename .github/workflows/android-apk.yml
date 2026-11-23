@@ -36,6 +36,10 @@ jobs:
           printf 'storeFile=upload.jks\nstorePassword=%s\nkeyPassword=%s\nkeyAlias=momwealth\n' "$PW" "$PW" > android/key.properties
       - name: Build APK (release, test-signed)
         run: flutter build apk --release --build-number=${{ github.run_number }}
+      - name: Show signing certificate
+        run: |
+          grep -c 'signingConfigs.getByName("release")' android/app/build.gradle.kts || echo "release signing NOT configured"
+          keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "Owner|SHA256" | head -3
       - uses: actions/upload-artifact@v4
         with:
           name: momwealth-test-apk
