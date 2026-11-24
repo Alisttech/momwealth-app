@@ -453,10 +453,19 @@ class Initials extends StatelessWidget {
 }
 
 /// Page scaffold with the standard padding and pull-to-refresh-free scrolling.
+/// Widest the content column gets. On tablets the page keeps a centred column instead of stretching.
+const contentMaxWidth = 640.0;
+
+/// [base] padding, widened at the sides on screens wider than [contentMaxWidth].
+EdgeInsets contentPadding(BuildContext context, EdgeInsets base) {
+  final side = (MediaQuery.sizeOf(context).width - contentMaxWidth) / 2;
+  return base.copyWith(left: math.max(base.left, side), right: math.max(base.right, side));
+}
+
 class PageBody extends StatelessWidget {
   const PageBody({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 96)});
   final List<Widget> children;
   final EdgeInsets padding;
   @override
-  Widget build(BuildContext context) => ListView(padding: padding, children: children);
+  Widget build(BuildContext context) => ListView(padding: contentPadding(context, padding), children: children);
 }

@@ -243,7 +243,7 @@ class _KycFlowState extends State<KycFlow> {
     );
   }
 
-  Widget _page(List<Widget> children) => ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), children: children);
+  Widget _page(List<Widget> children) => ListView(padding: contentPadding(context, const EdgeInsets.fromLTRB(16, 8, 16, 16)), children: children);
   static const _gap = SizedBox(height: 14);
   static Widget _hint(String t) => Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(t, style: const TextStyle(color: AppColors.inkSoft, height: 1.45)));
 
@@ -383,7 +383,7 @@ class _Success extends StatelessWidget {
     final p = context.watch<Session>().profile!;
     return Scaffold(
       body: SafeArea(
-        child: ListView(padding: const EdgeInsets.fromLTRB(20, 32, 20, 24), children: [
+        child: ListView(padding: contentPadding(context, const EdgeInsets.fromLTRB(20, 32, 20, 24)), children: [
           const Center(child: CircleAvatar(radius: 30, backgroundColor: AppColors.greenWash, child: Icon(Icons.check_rounded, color: AppColors.green, size: 34))),
           const SizedBox(height: 16),
           Text('You\'re verified, ${p.firstName}!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w700)),

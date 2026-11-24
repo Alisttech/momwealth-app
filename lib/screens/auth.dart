@@ -75,7 +75,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: ListView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 32), children: [
+        child: ListView(padding: contentPadding(context, const EdgeInsets.fromLTRB(24, 24, 24, 32)), children: [
           Center(child: Image.asset('assets/branding/splash-logo.png', width: 110)),
           const SizedBox(height: 22),
           Text(forgot ? 'Reset your password' : signUp ? 'Create your account' : 'Welcome back',

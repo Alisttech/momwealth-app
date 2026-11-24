@@ -39,7 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: list.isEmpty
           ? const PageBody(children: [EmptyCard("No notifications yet. We'll let you know about payments, withdrawals, loans and your groups here.")])
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: contentPadding(context, const EdgeInsets.fromLTRB(16, 8, 16, 32)),
               itemCount: list.length,
               separatorBuilder: (_, i) => const SizedBox(height: 8),
               itemBuilder: (_, i) => _Tile(list[i]),
