@@ -14,7 +14,14 @@ class Session extends ChangeNotifier {
     _authSub = FirebaseAuth.instance.authStateChanges().listen(_onAuth);
   }
 
-  final _db = FirebaseFirestore.instance;
+  /// Offline session filled by hand (no Firebase). Used to render store screenshots with demo data.
+  @visibleForTesting
+  Session.preview(String uid) : _previewUid = uid {
+    authResolved = true;
+  }
+  String? _previewUid;
+
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
   StreamSubscription<User?>? _authSub;
   final List<StreamSubscription> _subs = [];
   final Set<String> _loaded = {};
@@ -40,8 +47,8 @@ class Session extends ChangeNotifier {
   String get appLink => '${settings['appDownloadUrl'] ?? ''}'.trim();
   int get unreadCount => notifications.where((n) => !n.read).length;
 
-  bool get ready => user != null && const ['profile', 'plans', 'ledger', 'payments', 'withdrawals', 'loans', 'groups', 'ajos'].every(_loaded.contains);
-  String get uid => user?.uid ?? '';
+  bool get ready => _previewUid != null || user != null && const ['profile', 'plans', 'ledger', 'payments', 'withdrawals', 'loans', 'groups', 'ajos'].every(_loaded.contains);
+  String get uid => _previewUid ?? user?.uid ?? '';
 
   /// True when the phone number given at sign-up already belongs to another account (so it wasn't saved).
   bool phoneTaken = false;
