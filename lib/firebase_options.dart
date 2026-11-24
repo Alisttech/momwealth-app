@@ -1,5 +1,5 @@
 // Firebase settings for project "mom-wealth".
-// Android: the existing Android app registered in Firebase (package com.mycompany.momwealth).
+// Android: the Android app registered in Firebase with package com.momrehoboth.momwealth.
 // iOS: from GoogleService-Info.plist of the iOS app registered with bundle ID com.momrehoboth.momwealth.
 // These values identify the project; they are not secrets. Access is controlled by Firestore rules and Auth.
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
@@ -19,7 +19,7 @@ class DefaultFirebaseOptions {
 
   static const android = FirebaseOptions(
     apiKey: 'AIzaSyAfvCEOOj13J2-ugeNOBX_eg38tTldnqMY',
-    appId: '1:326655003698:android:1489d3423088bb6302802b',
+    appId: '1:326655003698:android:5ab763e64f6a5ec602802b',
     messagingSenderId: '326655003698',
     projectId: 'mom-wealth',
     storageBucket: 'mom-wealth.firebasestorage.app',
