@@ -122,8 +122,9 @@ class AccountCardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.watch<Session>().profile!;
-    final details = 'Account number: ${p.accountNumber}\nBank: ${p.accountBank}\nAccount name: ${p.accountName}';
+    final s = context.watch<Session>();
+    final p = s.profile!;
+    final details = 'Account number: ${p.accountNumber}\nBank: ${p.accountBank}\nAccount name: ${p.accountName}${s.appLink.isEmpty ? '' : '\n\nMOM Wealth app: ${s.appLink}'}';
     return Scaffold(
       appBar: AppBar(title: Text(p.hasAccount ? 'My account' : 'My member card')),
       body: PageBody(children: [

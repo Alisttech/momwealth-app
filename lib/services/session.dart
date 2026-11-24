@@ -34,6 +34,10 @@ class Session extends ChangeNotifier {
   List<AppNotification> notifications = [];
   List<SupportTicket> tickets = [];
   List<VendorOffer> offers = [];
+  /// config/settings (society rules set by MOM; readable by members).
+  Map<String, dynamic> settings = {};
+  /// Link added to shared invites, e.g. the App Store / Play Store page or MOM's website.
+  String get appLink => '${settings['appDownloadUrl'] ?? ''}'.trim();
   int get unreadCount => notifications.where((n) => !n.read).length;
 
   bool get ready => user != null && const ['profile', 'plans', 'ledger', 'payments', 'withdrawals', 'loans', 'groups', 'ajos'].every(_loaded.contains);
@@ -138,6 +142,10 @@ class Session extends ChangeNotifier {
       tickets = q.docs.map(SupportTicket.fromDoc).toList()..sort((a, b) => newest(a.createdAt, b.createdAt));
       _mark('tickets');
     }, onError: (e) => onErr('tickets', e)));
+    _subs.add(_db.collection('config').doc('settings').snapshots().listen((d) {
+      settings = d.data() ?? {};
+      notifyListeners();
+    }, onError: (e) => debugPrint('settings listener: $e')));
     _subs.add(_db.collection('vendorOffers').snapshots().listen((q) {
       offers = q.docs.map(VendorOffer.fromDoc).where((o) => o.active).toList();
       _mark('offers');

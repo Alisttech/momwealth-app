@@ -194,7 +194,9 @@ class ShareCode extends StatelessWidget {
   final bool isAjo;
   @override
   Widget build(BuildContext context) {
-    final msg = 'Join my ${isAjo ? 'Ajo circle' : 'savings group'} "$name" on the MOM Wealth app. Open Groups, tap "Join with a code" and enter: $code';
+    final link = context.watch<Session>().appLink;
+    final msg = 'Join my ${isAjo ? 'Ajo circle' : 'savings group'} "$name" on the MOM Wealth app. Open Groups, tap "Join with a code" and enter: $code'
+        '${link.isEmpty ? '' : '\n\nGet the app: $link'}';
     return AppCard(
       color: AppColors.goldWash,
       borderColor: const Color(0xFFEED9B8),
