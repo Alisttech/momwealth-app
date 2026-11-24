@@ -1,0 +1,50 @@
+# One-off Apple setup through the App Store Connect API (no developer.apple.com needed):
+# registers the bundle ID com.momrehoboth.momwealth and prints MOM's Team ID.
+# Needs secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (API key with the Admin role).
+# Run from Actions > Apple setup > Run workflow.
+name: Apple setup
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Register bundle ID and look up Team ID
+        env:
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+          P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          pip install --quiet pyjwt cryptography requests
+          python3 - <<'PY'
+          import os, time, json, sys, jwt, requests
+          kid, iss, key = os.environ.get("KID"), os.environ.get("ISS"), os.environ.get("P8")
+          if not (kid and iss and key):
+              sys.exit("Add the ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 secrets first.")
+          token = jwt.encode({"iss": iss, "iat": int(time.time()), "exp": int(time.time()) + 900, "aud": "appstoreconnect-v1"},
+                             key, algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
+          H = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+          API = "https://api.appstoreconnect.apple.com/v1"
+          BID = "com.momrehoboth.momwealth"
+          def show(r):
+              if r.status_code >= 400:
+                  for e in r.json().get("errors", []):
+                      print(f"  Apple says: {e.get('status')} {e.get('code')}: {e.get('title')} - {e.get('detail')}")
+          r = requests.get(f"{API}/bundleIds", headers=H, params={"filter[identifier]": BID})
+          if r.status_code >= 400:
+              show(r); sys.exit("Couldn't read bundle IDs. If Apple mentions the program membership or agreement, MOM's Account Holder must renew or accept it.")
+          found = [b for b in r.json()["data"] if b["attributes"]["identifier"] == BID]
+          if found:
+              b = found[0]; print(f"Bundle ID {BID} is already registered.")
+          else:
+              r = requests.post(f"{API}/bundleIds", headers=H, data=json.dumps({"data": {"type": "bundleIds",
+                  "attributes": {"identifier": BID, "name": "MOM Wealth", "platform": "IOS"}}}))
+              if r.status_code >= 400:
+                  show(r); sys.exit("Couldn't register the bundle ID.")
+              b = r.json()["data"]; print(f"Registered bundle ID {BID}.")
+          print(f"TEAM ID (App ID prefix): {b['attributes'].get('seedId')}   <- use this for the APPLE_TEAM_ID secret")
+          r = requests.get(f"{API}/apps", headers=H, params={"filter[bundleId]": BID})
+          apps = r.json().get("data", []) if r.ok else []
+          print("App record in App Store Connect: " + (f"exists ({apps[0]['attributes']['name']})" if apps else "not created yet - create it now in App Store Connect > Apps > + > New App"))
+          PY
