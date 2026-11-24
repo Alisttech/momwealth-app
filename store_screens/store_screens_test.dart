@@ -2,9 +2,11 @@
 // Run (CI does this): flutter test store_screens --update-goldens --dart-define=LOANS_ENABLED=false
 // Output: store_screens/goldens/*.png at 1080 x 2340.
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:momwealth/models.dart';
@@ -106,6 +108,11 @@ Future<void> loadFonts() async {
     dm.addFont(rootBundle.load('assets/fonts/DMSans-$w.ttf'));
   }
   await dm.load();
+  final naira = FontLoader('NairaFallback');
+  for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold']) {
+    naira.addFont(rootBundle.load('assets/fonts/Naira-$w.otf'));
+  }
+  await naira.load();
   await (FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
 }
 
@@ -132,7 +139,14 @@ Future<void> shoot(WidgetTester tester, String name, Widget home, {int tab = 0, 
     }
   });
   await tester.pumpAndSettle();
-  await expectLater(find.byKey(const ValueKey('shot')), matchesGoldenFile('goldens/$name.png'));
+  // Capture at full phone resolution (1080 x 2340).
+  final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const ValueKey('shot')));
+  await tester.runAsync(() async {
+    final image = await boundary.toImage(pixelRatio: tester.view.devicePixelRatio);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    Directory('store_screens/goldens').createSync(recursive: true);
+    File('store_screens/goldens/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
 }
 
 void main() {
@@ -144,6 +158,4 @@ void main() {
   testWidgets('05 ajo', (t) => shoot(t, '05-ajo', const AjoScreen(ajoId: 'ajo')));
   testWidgets('06 group', (t) => shoot(t, '06-group', const GroupScreen(groupId: 'land')));
   testWidgets('07 card', (t) => shoot(t, '07-card', const AccountCardScreen()));
-  // Keep the analyzer happy about dart:io (used by CI to list outputs).
-  test('outputs folder', () => expect(Directory('store_screens').existsSync(), isTrue));
 }

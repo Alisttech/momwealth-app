@@ -42,6 +42,16 @@ flutter:
           weight: 600
         - asset: assets/fonts/DMSans-Bold.ttf
           weight: 700
+    - family: NairaFallback
+      fonts:
+        - asset: assets/fonts/Naira-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Naira-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Naira-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Naira-Bold.otf
+          weight: 700
 
 # dart run flutter_launcher_icons
 flutter_launcher_icons:

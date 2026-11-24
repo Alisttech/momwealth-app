@@ -21,7 +21,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Render screens
-        run: flutter test store_screens --update-goldens --dart-define=LOANS_ENABLED=false
+        run: flutter test store_screens --dart-define=LOANS_ENABLED=false
       - name: Commit images
         run: |
           git config user.name "github-actions[bot]"

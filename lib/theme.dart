@@ -24,6 +24,7 @@ ThemeData buildTheme() {
   final base = ThemeData(
     useMaterial3: true,
     fontFamily: 'DMSans',
+    fontFamilyFallback: const ['NairaFallback'], // DM Sans has no ₦
     colorScheme: ColorScheme.fromSeed(seedColor: AppColors.green, primary: AppColors.green, surface: Colors.white),
     scaffoldBackgroundColor: AppColors.bg,
   );
