@@ -37,7 +37,7 @@ ThemeData buildTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(fontFamily: 'DMSans', fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink),
+      titleTextStyle: TextStyle(fontFamily: 'DMSans', fontFamilyFallback: ['NairaFallback'], fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -56,7 +56,7 @@ ThemeData buildTheme() {
         minimumSize: const Size.fromHeight(52),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(fontFamily: 'DMSans', fontFamilyFallback: ['NairaFallback'], fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -66,11 +66,11 @@ ThemeData buildTheme() {
         side: const BorderSide(color: AppColors.line),
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontFamily: 'DMSans', fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(fontFamily: 'DMSans', fontFamilyFallback: ['NairaFallback'], fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: AppColors.green, textStyle: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600)),
+      style: TextButton.styleFrom(foregroundColor: AppColors.green, textStyle: const TextStyle(fontFamily: 'DMSans', fontFamilyFallback: ['NairaFallback'], fontWeight: FontWeight.w600)),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
