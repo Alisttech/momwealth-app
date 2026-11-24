@@ -116,12 +116,20 @@ Future<void> loadFonts() async {
   await (FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
 }
 
-Future<void> shoot(WidgetTester tester, String name, Widget home, {int tab = 0, Session? session}) async {
+/// Screen sizes rendered: phone, 7-inch tablet (600 x 960 dp), 10-inch tablet (800 x 1280 dp).
+const devices = {
+  'phone': (Size(1080, 2340), 2.625),
+  'tablet7': (Size(1200, 1920), 2.0),
+  'tablet10': (Size(1600, 2560), 2.0),
+};
+
+Future<void> shoot(WidgetTester tester, String name, Widget home, {int tab = 0, Session? session, String device = 'phone'}) async {
   final s = session ?? demoSession();
-  tester.view.physicalSize = const Size(1080, 2340);
-  tester.view.devicePixelRatio = 2.625;
-  tester.view.padding = const FakeViewPadding(top: 70, bottom: 40);
-  tester.view.viewPadding = const FakeViewPadding(top: 70, bottom: 40);
+  final (size, dpr) = devices[device]!;
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = dpr;
+  tester.view.padding = FakeViewPadding(top: 26 * dpr, bottom: 16 * dpr);
+  tester.view.viewPadding = FakeViewPadding(top: 26 * dpr, bottom: 16 * dpr);
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ChangeNotifierProvider<Session>.value(
     value: s,
@@ -144,18 +152,26 @@ Future<void> shoot(WidgetTester tester, String name, Widget home, {int tab = 0, 
   await tester.runAsync(() async {
     final image = await boundary.toImage(pixelRatio: tester.view.devicePixelRatio);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    Directory('store_screens/goldens').createSync(recursive: true);
-    File('store_screens/goldens/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+    final dir = device == 'phone' ? 'store_screens/goldens' : 'store_screens/goldens/$device';
+    Directory(dir).createSync(recursive: true);
+    File('$dir/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 }
 
 void main() {
   setUpAll(loadFonts);
-  testWidgets('01 home', (t) => shoot(t, '01-home', AppShell(key: AppShell.shellKey)));
-  testWidgets('02 savings', (t) => shoot(t, '02-savings', AppShell(key: AppShell.shellKey), tab: 1));
-  testWidgets('03 plan', (t) => shoot(t, '03-plan', const PlanScreen(planId: 'school')));
-  testWidgets('04 groups', (t) => shoot(t, '04-groups', AppShell(key: AppShell.shellKey), tab: 2));
-  testWidgets('05 ajo', (t) => shoot(t, '05-ajo', const AjoScreen(ajoId: 'ajo')));
-  testWidgets('06 group', (t) => shoot(t, '06-group', const GroupScreen(groupId: 'land')));
-  testWidgets('07 card', (t) => shoot(t, '07-card', const AccountCardScreen()));
+  final screens = <(String, Widget Function(), int)>[
+    ('01-home', () => AppShell(key: AppShell.shellKey), 0),
+    ('02-savings', () => AppShell(key: AppShell.shellKey), 1),
+    ('03-plan', () => const PlanScreen(planId: 'school'), 0),
+    ('04-groups', () => AppShell(key: AppShell.shellKey), 2),
+    ('05-ajo', () => const AjoScreen(ajoId: 'ajo'), 0),
+    ('06-group', () => const GroupScreen(groupId: 'land'), 0),
+    ('07-card', () => const AccountCardScreen(), 0),
+  ];
+  for (final device in devices.keys) {
+    for (final (name, build, tab) in screens) {
+      testWidgets('$device $name', (t) => shoot(t, name, build(), tab: tab, device: device));
+    }
+  }
 }
