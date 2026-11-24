@@ -1,6 +1,6 @@
 // Renders the real app screens with demo data, for the Google Play / App Store listing.
 // Run (CI does this): flutter test store_screens --update-goldens --dart-define=LOANS_ENABLED=false
-// Output: store_screens/goldens/ (phone) and goldens/tablet7, goldens/tablet10. Re-rendered whenever this file changes.
+// Output: store_screens/goldens/ (phone) and goldens/tablet7, goldens/tablet10. Re-rendered (v2) whenever this file changes.
 import 'dart:io';
 import 'dart:ui' as ui;
 

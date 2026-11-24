@@ -16,18 +16,16 @@ class AppCard extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    final box = Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor ?? AppColors.line),
+    // A Material (not a plain coloured box) so tap ripples and list rows inside show their feedback.
+    return Material(
+      color: color ?? Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: borderColor ?? AppColors.line)),
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(width: double.infinity, child: Padding(padding: padding, child: child)),
       ),
-      child: child,
     );
-    if (onTap == null) return box;
-    return Material(color: Colors.transparent, child: InkWell(borderRadius: BorderRadius.circular(16), onTap: onTap, child: box));
   }
 }
 
