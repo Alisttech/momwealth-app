@@ -128,7 +128,7 @@ class _AuthGateState extends State<AuthGate> {
       return const AuthScreen();
     }
     if (!s.ready) return const LoadingScreen();
-    return const AppShell();
+    return AppShell(key: AppShell.key);
   }
 }
 

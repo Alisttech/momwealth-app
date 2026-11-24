@@ -7,6 +7,7 @@ import '../services/api.dart';
 import '../services/session.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'shell.dart';
 
 const supportCategories = ['Savings and deposits', 'Withdrawals', 'Account and security', 'Loans', 'Groups and Ajo', 'Verification (BVN)', 'Other'];
 
@@ -58,6 +59,10 @@ class _SupportScreenState extends State<SupportScreen> {
           FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
         ]);
       });
+      // Back to the Profile tab, where "Open a support ticket" lives.
+      if (!mounted) return;
+      Navigator.of(context).popUntil((r) => r.isFirst);
+      AppShell.key.currentState?.go(4);
     } catch (e) {
       setState(() => _error = friendlyError(e));
     }

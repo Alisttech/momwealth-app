@@ -11,6 +11,8 @@ import 'savings.dart';
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
   static AppShellState? of(BuildContext context) => context.findAncestorStateOfType<AppShellState>();
+  /// For pages pushed on top of the tabs (they can't find the shell by context).
+  static final key = GlobalKey<AppShellState>();
   @override
   State<AppShell> createState() => AppShellState();
 }
