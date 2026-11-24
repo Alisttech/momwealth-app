@@ -40,7 +40,10 @@ jobs:
           KS_B64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_B64 }}
           KS_PW: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
         run: |
-          echo "$KS_B64" | tr -d '\n\r ' | base64 -d > android/app/upload.jks
+          CLEAN=$(printf '%s' "$KS_B64" | tr -d '\n\r\t ')
+          echo "Key text: ${#CLEAN} characters (expected 3512), starts ${CLEAN:0:4}, ends ${CLEAN: -2}"
+          printf '%s' "$CLEAN" | base64 -d > android/app/upload.jks || { echo "ANDROID_UPLOAD_KEYSTORE_B64 is not valid. Paste the whole of momwealth-upload-keystore.b64.txt and nothing else (it starts MIIK and ends ==)."; exit 1; }
+          keytool -list -keystore android/app/upload.jks -storepass "$KS_PW" >/dev/null || { echo "The keystore opened but the password doesn't match. Re-enter ANDROID_UPLOAD_KEYSTORE_PASSWORD."; exit 1; }
           printf 'storeFile=upload.jks\nstorePassword=%s\nkeyPassword=%s\nkeyAlias=upload\n' "$KS_PW" "$KS_PW" > android/key.properties
       - name: Build app bundle (loans off)
         run: flutter build appbundle --release --dart-define=LOANS_ENABLED=false --build-number=$((GITHUB_RUN_NUMBER + 100))
