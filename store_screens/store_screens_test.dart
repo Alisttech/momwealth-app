@@ -1,6 +1,6 @@
 // Renders the real app screens with demo data, for the Google Play / App Store listing.
 // Run (CI does this): flutter test store_screens --update-goldens --dart-define=LOANS_ENABLED=false
-// Output: store_screens/goldens/*.png at 1080 x 2340.
+// Output: store_screens/goldens/*.png at 1080 x 2340 (re-rendered whenever this file changes).
 import 'dart:io';
 import 'dart:ui' as ui;
 
