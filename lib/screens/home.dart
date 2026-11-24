@@ -13,6 +13,7 @@ import 'history.dart';
 import 'kyc.dart' show promptVerification, openVerification;
 import 'loans.dart';
 import 'notifications.dart';
+import 'profile.dart' show ChangePhoneScreen;
 import 'vendors.dart';
 import 'payment.dart';
 import 'savings.dart';
@@ -84,6 +85,16 @@ class HomeTab extends StatelessWidget {
             HeroButton(label: 'Withdraw', icon: Icons.north_rounded, filled: false, onTap: () => push(context, const WithdrawScreen())),
           ],
         ),
+        if (s.phoneTaken && p.phone.isEmpty) ...[
+          const SizedBox(height: 12),
+          AppCard(
+            onTap: () => push(context, const ChangePhoneScreen()),
+            color: AppColors.goldWash,
+            borderColor: Colors.transparent,
+            child: const Text('The phone number you signed up with is already used by another MOM Wealth account, so it wasn\'t saved. Tap to add a different number.',
+                style: TextStyle(fontSize: 13.5, height: 1.4)),
+          ),
+        ],
         if (!p.verified) ...[
           const SizedBox(height: 12),
           AppCard(

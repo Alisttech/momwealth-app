@@ -43,6 +43,8 @@ class Session extends ChangeNotifier {
   bool get ready => user != null && const ['profile', 'plans', 'ledger', 'payments', 'withdrawals', 'loans', 'groups', 'ajos'].every(_loaded.contains);
   String get uid => user?.uid ?? '';
 
+  /// True when the phone number given at sign-up already belongs to another account (so it wasn't saved).
+  bool phoneTaken = false;
   /// Values captured at sign-up and sent to memberSetup on first sign-in.
   String? pendingName, pendingPhone;
 
@@ -64,13 +66,18 @@ class Session extends ChangeNotifier {
     ajos = [];
     ajoBanks = [];
     notifications = [];
+    phoneTaken = false;
     tickets = [];
     offers = [];
     authResolved = true;
     notifyListeners();
     if (u == null) return;
     try {
-      await Api.memberSetup(displayName: pendingName ?? u.displayName ?? '', phone: pendingPhone ?? '', newSignup: pendingName != null);
+      final r = await Api.memberSetup(displayName: pendingName ?? u.displayName ?? '', phone: pendingPhone ?? '', newSignup: pendingName != null);
+      if (r['phoneTaken'] == true) {
+        phoneTaken = true;
+        notifyListeners();
+      }
     } catch (e) {
       debugPrint('memberSetup failed: $e');
     }

@@ -35,7 +35,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _email.text.trim();
     try {
       if (_mode == _Mode.forgot) {
-        if (email.isEmpty) throw 'Enter your email.';
+        if (!email.contains('@')) throw 'Enter the email address on your account.';
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
         setState(() => _ok = 'If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.');
         return;
@@ -43,14 +43,23 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_mode == _Mode.signUp) {
         final name = _name.text.trim().replaceAll(RegExp(r'\s+'), ' ');
         if (name.split(' ').length < 2) throw 'Enter your first and last name.';
-        if (_phone.text.replaceAll(RegExp(r'\D'), '').length < 10) throw 'Enter a valid phone number.';
+        if (!RegExp(r'^(0|234)?[789]\d{9}$').hasMatch(_phone.text.replaceAll(RegExp(r'\D'), ''))) throw 'Enter a valid 11-digit phone number.';
+        if (!email.contains('@')) throw 'Enter your email address.';
         final session = context.read<Session>();
         session.pendingName = name;
         session.pendingPhone = _phone.text.trim();
         final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: _pass.text);
         await cred.user?.updateDisplayName(name);
       } else {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: _pass.text);
+        if (email.isEmpty) throw 'Enter your phone number or email.';
+        if (_pass.text.isEmpty) throw 'Enter your password.';
+        var loginEmail = email;
+        if (!email.contains('@')) {
+          // Phone number: the backend checks the password and tells us which account it belongs to.
+          final r = await Api.call('signInWithPhone', {'phone': email, 'password': _pass.text});
+          loginEmail = '${r['email'] ?? ''}';
+        }
+        await FirebaseAuth.instance.signInWithEmailAndPassword(email: loginEmail, password: _pass.text);
       }
     } on String catch (m) {
       setState(() => _error = m);
@@ -73,7 +82,7 @@ class _AuthScreenState extends State<AuthScreen> {
               textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text(
-            forgot ? "Enter your email and we'll send you a reset link." : signUp ? 'Save, grow and borrow with MOM Wealth.' : 'Sign in to continue saving.',
+            forgot ? "Enter the email on your account and we'll send you a reset link." : signUp ? 'Save, grow and borrow with MOM Wealth.' : 'Sign in to continue saving.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.inkSoft),
           ),
@@ -86,10 +95,13 @@ class _AuthScreenState extends State<AuthScreen> {
           ],
           TextField(
             controller: _email,
-            keyboardType: TextInputType.emailAddress,
+            keyboardType: _mode == _Mode.signIn ? TextInputType.text : TextInputType.emailAddress,
             autocorrect: false,
-            autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'Email'),
+            autofillHints: _mode == _Mode.signIn ? const [AutofillHints.username] : const [AutofillHints.email],
+            decoration: InputDecoration(
+              labelText: _mode == _Mode.signIn ? 'Phone number or email' : 'Email',
+              hintText: _mode == _Mode.signIn ? '08031234567 or you@example.com' : null,
+            ),
           ),
           if (!forgot) ...[
             const SizedBox(height: 14),
