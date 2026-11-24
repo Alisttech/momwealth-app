@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../activity.dart';
+import '../features.dart';
 import '../format.dart';
 import '../services/session.dart';
 import '../theme.dart';
@@ -143,9 +144,9 @@ class HomeTab extends StatelessWidget {
             ]),
           ),
         ],
-        if (infoNeeded) ...[
+        if (loansEnabled && infoNeeded) ...[
           const SizedBox(height: 12),
-          GestureDetector(onTap: () => AppShell.of(context)?.go(3), child: const Note('MOM needs more information about your loan. Tap to reply.')),
+          GestureDetector(onTap: () => AppShell.of(context)?.go(AppShellState.loansTab), child: const Note('MOM needs more information about your loan. Tap to reply.')),
         ],
         if (w != null) ...[const SizedBox(height: 12), Note('Withdrawal of ${naira(w.amount)}: ${withdrawalLabel(w.status)}.')],
         const SizedBox(height: 18),
@@ -153,7 +154,7 @@ class HomeTab extends StatelessWidget {
           _Quick(icon: Icons.add_rounded, label: 'Save\nmoney', onTap: () => push(context, const PayScreen())),
           _Quick(icon: Icons.savings_outlined, label: 'My\nsavings', onTap: () => AppShell.of(context)?.go(1)),
           _Quick(icon: Icons.north_rounded, label: 'Withdraw', onTap: () => push(context, const WithdrawScreen())),
-          _Quick(icon: Icons.payments_outlined, label: 'Apply for\nloan', onTap: () => push(context, const LoanApplyScreen())),
+          if (loansEnabled) _Quick(icon: Icons.payments_outlined, label: 'Apply for\nloan', onTap: () => push(context, const LoanApplyScreen())),
           _Quick(icon: Icons.receipt_long_outlined, label: 'History', onTap: () => push(context, const HistoryScreen())),
         ]),
         const SizedBox(height: 18),
@@ -199,10 +200,10 @@ class HomeTab extends StatelessWidget {
               TextSpan(text: 'Set a savings goal →', style: TextStyle(color: AppColors.green, fontWeight: FontWeight.w700)),
             ])),
           ),
-        if (loan != null) ...[
+        if (loansEnabled && loan != null) ...[
           const SizedBox(height: 10),
           AppCard(
-            onTap: () => AppShell.of(context)?.go(3),
+            onTap: () => AppShell.of(context)?.go(AppShellState.loansTab),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(loan.isRunning ? 'Outstanding loan balance' : 'Loan application', style: const TextStyle(color: AppColors.inkSoft, fontSize: 12.5, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),

@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 IOS_BUNDLE_ID="com.momrehoboth.momwealth"
-ANDROID_APP_ID="com.mycompany.momwealth"   # matches the Android app already registered in Firebase
+ANDROID_APP_ID="com.mycompany.momwealth"   # switches to com.momrehoboth.momwealth together with the new Firebase Android app values
 APP_NAME="MOM Wealth"
 
 if [ ! -d ios ] || [ ! -d android ]; then

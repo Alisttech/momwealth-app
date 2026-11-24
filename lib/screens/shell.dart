@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features.dart';
 import '../theme.dart';
 import 'groups.dart';
 import 'home.dart';
@@ -25,14 +26,16 @@ class AppShellState extends State<AppShell> {
     ('Home', 'home-fill.png', 'home-grey-unfill.png'),
     ('Savings', 'poket-fill.png', 'Poket-unfill.png'),
     ('Groups', 'Goals-fill.png', 'Goals-unfill.png'),
-    ('Loans', 'Card-fill.png', 'Card-unfill.png'),
+    if (loansEnabled) ('Loans', 'Card-fill.png', 'Card-unfill.png'),
     ('Profile', 'profile-fill.png', 'profile-unfill.png'),
   ];
+  static const profileTab = loansEnabled ? 4 : 3;
+  static const loansTab = 3; // only when loansEnabled
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: index, children: const [HomeTab(), SavingsTab(), GroupsTab(), LoansTab(), ProfileTab()]),
+      body: IndexedStack(index: index, children: const [HomeTab(), SavingsTab(), GroupsTab(), if (loansEnabled) LoansTab(), ProfileTab()]),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.line))),
         child: SafeArea(

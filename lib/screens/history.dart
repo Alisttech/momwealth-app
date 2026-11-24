@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../activity.dart';
+import '../features.dart';
 import '../services/session.dart';
 import '../widgets.dart';
 
@@ -13,7 +14,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'all';
-  static const _filters = [('all', 'All'), ('savings', 'Savings'), ('groups', 'Groups & Ajo'), ('withdrawals', 'Withdrawals'), ('loans', 'Loans')];
+  static const _filters = [('all', 'All'), ('savings', 'Savings'), ('groups', 'Groups & Ajo'), ('withdrawals', 'Withdrawals'), if (loansEnabled) ('loans', 'Loans')];
 
   @override
   Widget build(BuildContext context) {

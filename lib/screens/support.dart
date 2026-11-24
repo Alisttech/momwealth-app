@@ -62,7 +62,7 @@ class _SupportScreenState extends State<SupportScreen> {
       // Back to the Profile tab, where "Open a support ticket" lives.
       if (!mounted) return;
       Navigator.of(context).popUntil((r) => r.isFirst);
-      AppShell.shellKey.currentState?.go(4);
+      AppShell.shellKey.currentState?.go(AppShellState.profileTab);
     } catch (e) {
       setState(() => _error = friendlyError(e));
     }
