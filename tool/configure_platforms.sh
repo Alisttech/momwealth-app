@@ -51,6 +51,8 @@ p.write_text(s)
 p = pathlib.Path("ios/Runner.xcodeproj/project.pbxproj"); s = p.read_text()
 s = re.sub(r"PRODUCT_BUNDLE_IDENTIFIER = [^;]*\.momwealth;", f"PRODUCT_BUNDLE_IDENTIFIER = {ios_id};", s)
 s = re.sub(r"IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;", "IPHONEOS_DEPLOYMENT_TARGET = 15.0;", s)
+# iPhone only (no iPad build), so the App Store needs iPhone screenshots only.
+s = re.sub(r'TARGETED_DEVICE_FAMILY = "?[0-9,]+"?;', 'TARGETED_DEVICE_FAMILY = 1;', s)
 p.write_text(s)
 pf = pathlib.Path("ios/Podfile")
 if pf.exists():
